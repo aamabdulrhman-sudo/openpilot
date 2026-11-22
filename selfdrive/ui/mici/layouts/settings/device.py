@@ -130,7 +130,8 @@ class UpdaterState(IntEnum):
 
 class PairBigButton(BigButton):
   def __init__(self):
-    super().__init__("pair", "connect.comma.ai", gui_app.texture("icons_mici/settings/comma_icon.png", 33, 60))
+    super().__init__("FreePilots Vault", "ddash.aaam.sa", gui_app.texture("icons_mici/settings/comma_icon.png", 33, 60))
+    self.set_click_callback(lambda: gui_app.push_widget(BigDialog("FreePilots Vault", "Connected to: https://ddash.aaam.sa\nPrivate Dashcam Server active.")))
 
   def _get_label_font_size(self):
     return 64
