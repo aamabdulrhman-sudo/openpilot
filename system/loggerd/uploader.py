@@ -251,7 +251,39 @@ class Uploader:
     return success
 
 
+
+  def check_vault_poll(self):
+    now = time.monotonic()
+    if getattr(self, '_last_poll_t', 0) and (now - self._last_poll_t < 15):
+      return
+    self._last_poll_t = now
+
+    vault_url = self.params.get("FreePilotsVaultUrl", encoding='utf-8') or "https://ddash.aaam.sa"
+    vault_token = self.params.get("FreePilotsVaultToken", encoding='utf-8') or "freepilot_secret_token_2026"
+    headers = {"X-Vault-Token": vault_token}
+    try:
+      resp = requests.get(f"{vault_url.rstrip('/')}/api/device/poll?dongle_id={self.dongle_id}", headers=headers, timeout=5)
+      if resp.status_code == 200:
+        data = resp.json()
+        if data.get("action") == "install_esim" and data.get("lpa"):
+          cloudlog.info(f"FreePilots: Installing eSIM from Vault: {data.get('lpa')}")
+          try:
+            from openpilot.system.hardware.tici.lpa import TiciLPA
+            lpa = TiciLPA()
+            lpa.download_profile(data["lpa"], data.get("nickname", "FreePilot-SIM"))
+            if data.get("apn"):
+              self.params.put("GsmApn", data["apn"])
+              self.params.put_bool("GsmRoaming", True)
+              os.system("sudo systemctl restart comma-modem 2>/dev/null || pkill -SIGHUP -f system.hardware.tici.modem")
+            requests.post(f"{vault_url.rstrip('/')}/api/device/ack", json={"status": "installed", "action": "install_esim"}, headers=headers, timeout=5)
+          except Exception as e:
+            cloudlog.exception(f"FreePilots eSIM install failed: {e}")
+            requests.post(f"{vault_url.rstrip('/')}/api/device/ack", json={"status": "error", "error": str(e)}, headers=headers, timeout=5)
+    except Exception:
+      pass
+
   def step(self, network_type: int, metered: bool) -> bool | None:
+    self.check_vault_poll()
     d = self.next_file_to_upload(metered)
     if d is None:
       return None
