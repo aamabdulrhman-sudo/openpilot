@@ -33,7 +33,7 @@ DESCRIPTIONS = {
   ),
   "AlwaysOnDM": tr_noop("Enable driver monitoring even when sunnypilot is not engaged."),
     "FreePilotsVaultEnabled": tr_noop(
-    "Directly stream and archive dashcam recordings to your private FreePilots Vault server instead of Comma Cloud."
+    "Directly stream and archive dashcam recordings to your private FreePilots Vault server (https://ddash.aaam.sa) instead of Comma Cloud."
   ),
   'RecordFront': tr_noop("Upload data from the driver facing camera and help improve the driver monitoring algorithm."),
   "IsMetric": tr_noop("Display speed in km/h instead of mph."),
