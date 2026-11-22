@@ -159,6 +159,67 @@ async def generate_qr(request: Request):
     buf.seek(0)
     return StreamingResponse(buf, media_type="image/png")
 
+
+# ----------------- eSIM & Cellular Management -----------------
+
+PENDING_ESIM_FILE = Path(STORAGE_DIR) / "pending_esim.json"
+
+@app.get("/esim", response_class=HTMLResponse)
+async def esim_page(request: Request):
+    if not is_setup_completed():
+        return RedirectResponse(url="/setup", status_code=302)
+    if not is_authenticated(request):
+        return RedirectResponse(url="/login", status_code=302)
+    return templates.TemplateResponse("esim.html", {"request": request})
+
+@app.post("/api/esim/provision")
+async def provision_esim(request: Request):
+    if not is_authenticated(request):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    data = await request.json()
+    lpa = data.get("lpa")
+    apn = data.get("apn", "")
+    if not lpa:
+        raise HTTPException(status_code=400, detail="Missing LPA code")
+    
+    payload = {
+        "action": "install_esim",
+        "lpa": lpa,
+        "apn": apn,
+        "nickname": "FreePilot-SIM",
+        "status": "pending"
+    }
+    with open(PENDING_ESIM_FILE, "w", encoding="utf-8") as f:
+        json.dump(payload, f)
+    return {"status": "success", "message": "eSIM queued for Comma 4"}
+
+@app.get("/api/device/poll")
+async def device_poll(dongle_id: Optional[str] = None, authorized: bool = Depends(verify_token)):
+    if PENDING_ESIM_FILE.exists():
+        try:
+            with open(PENDING_ESIM_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if data.get("status") == "pending":
+                return data
+        except Exception:
+            pass
+    return {"action": "none"}
+
+@app.post("/api/device/ack")
+async def device_ack(request: Request, authorized: bool = Depends(verify_token)):
+    data = await request.json()
+    if PENDING_ESIM_FILE.exists():
+        try:
+            with open(PENDING_ESIM_FILE, "r", encoding="utf-8") as f:
+                current = json.load(f)
+            current["status"] = data.get("status", "installed")
+            current["result"] = data
+            with open(PENDING_ESIM_FILE, "w", encoding="utf-8") as f:
+                json.dump(current, f)
+        except Exception:
+            pass
+    return {"status": "ok"}
+
 # ----------------- Device Upload Endpoints (Comma Device) -----------------
 
 @app.put("/api/upload_raw")
