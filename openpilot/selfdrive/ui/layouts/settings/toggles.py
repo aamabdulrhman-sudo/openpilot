@@ -77,7 +77,7 @@ class TogglesLayout(Widget):
         lambda: tr("FreePilots Private Vault"),
         DESCRIPTIONS["FreePilotsVaultEnabled"],
         "monitoring.png",
-        False,
+        True,
       ),
       "RecordFront": (
         lambda: tr("Record and Upload Driver Camera"),
