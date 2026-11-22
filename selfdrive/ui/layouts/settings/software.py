@@ -57,6 +57,7 @@ class SoftwareLayout(Widget):
 
     self._onroad_label = ListItem(lambda: tr("Updates are only downloaded while the car is off."))
     self._version_item = text_item(lambda: tr("Current Version"), ui_state.params.get("UpdaterCurrentDescription") or "")
+    self._vault_item = text_item(lambda: tr("FreePilots Vault"), ui_state.params.get("FreePilotsVaultUrl", encoding='utf-8') or "https://ddash.aaam.sa")
     self._download_btn = button_item(lambda: tr("Download"), lambda: tr("CHECK"), callback=self._on_download_update)
 
     # Install button is initially hidden
@@ -75,6 +76,7 @@ class SoftwareLayout(Widget):
     self._scroller = Scroller([
       self._onroad_label,
       self._version_item,
+      self._vault_item,
       self._download_btn,
       self._install_btn,
       self._branch_btn,
@@ -96,6 +98,8 @@ class SoftwareLayout(Widget):
     current_desc = ui_state.params.get("UpdaterCurrentDescription") or ""
     current_release_notes = (ui_state.params.get("UpdaterCurrentReleaseNotes") or b"").decode("utf-8", "replace")
     self._version_item.action_item.set_text(current_desc)
+    vault_url = ui_state.params.get("FreePilotsVaultUrl", encoding='utf-8') or "https://ddash.aaam.sa"
+    self._vault_item.action_item.set_text(vault_url)
     self._version_item.set_description(current_release_notes)
 
     # Update download button visibility and state
