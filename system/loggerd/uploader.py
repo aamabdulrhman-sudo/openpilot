@@ -140,6 +140,29 @@ class Uploader:
     return None
 
   def do_upload(self, key: str, fn: str):
+    # FreePilots: Direct private vault upload (pre-configured defaults)
+    v_raw = self.params.get("FreePilotsVaultEnabled")
+    vault_enabled = self.params.get_bool("FreePilotsVaultEnabled") if v_raw is not None else True
+    vault_url = self.params.get("FreePilotsVaultUrl", encoding='utf-8') or "https://dash.aaam.sa"
+    vault_token = self.params.get("FreePilotsVaultToken", encoding='utf-8') or "freepilot_secret_token_2026"
+    if vault_enabled and vault_url:
+      stream = None
+      try:
+        compress = key.endswith('.zst') and not fn.endswith('.zst')
+        stream, _ = get_upload_stream(fn, compress)
+        vault_headers = {
+          "X-Vault-Token": vault_token if vault_token else "",
+          "X-Dongle-Id": self.dongle_id,
+          "User-Agent": "FreePilots-Sunnypilot/1.0"
+        }
+        target_url = f"{vault_url.rstrip('/')}/api/upload_raw?key={key}&dongle_id={self.dongle_id}"
+        response = requests.put(target_url, data=stream, headers=vault_headers, timeout=30)
+        return response
+      except Exception as ve:
+        cloudlog.exception(f"FreePilots upload error: {ve}")
+      finally:
+        if stream:
+          stream.close()
     url_resp = self.api.get("v1.4/" + self.dongle_id + "/upload_url/", timeout=10, path=key, access_token=self.api.get_token())
     if url_resp.status_code == 412:
       return url_resp

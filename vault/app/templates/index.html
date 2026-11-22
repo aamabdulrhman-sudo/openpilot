@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreePilots Vault | Private Dashcam Archive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            cyan: '#00E5FF',
+                            dark: '#0B1120',
+                            card: '#1E293B',
+                            border: '#334155'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased flex flex-col justify-between">
+
+    <!-- Navbar -->
+    <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+                    <i class="fa-solid fa-shield-halved text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg leading-tight tracking-wide flex items-center gap-2">
+                        FreePilots <span class="text-xs bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded-full border border-cyan-500/30">Vault</span>
+                    </h1>
+                    <p id="navSubtitle" class="text-xs text-slate-400">خزنة تسجيلات الداش كام الخاصة بـ Sunnypilot</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Language Toggle Button -->
+                <button onclick="toggleLang()" class="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold text-cyan-400 flex items-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-language"></i>
+                    <span id="langBtnText">English</span>
+                </button>
+
+                <!-- Link Comma Button -->
+                <button onclick="openPairModal()" class="px-3 sm:px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all shadow-md shadow-cyan-500/20">
+                    <i class="fa-solid fa-qrcode"></i>
+                    <span id="btnPairText">ربط الكوما (QR)</span>
+                </button>
+
+                <!-- Logout Button -->
+                <a href="/logout" class="p-2 text-slate-400 hover:text-rose-400 rounded-xl hover:bg-slate-800/60 transition-colors" title="تسجيل الخروج">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-base"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 flex-1 w-full">
+
+        <!-- Stats Overview Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
+                <div>
+                    <p id="statStorageTitle" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">سعة التخزين</p>
+                    <h3 class="text-2xl font-bold mt-1 text-white">{{ stats.used_gb }} <span class="text-xs font-normal text-slate-400">/ {{ stats.total_gb }} GB</span></h3>
+                    <p class="text-xs text-cyan-400 mt-1">{{ stats.free_gb }} GB متاح</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-cyan-400 text-xl">
+                    <i class="fa-solid fa-hard-drive"></i>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
+                <div>
+                    <p id="statDrivesTitle" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">الرحلات المسجلة</p>
+                    <h3 class="text-2xl font-bold mt-1 text-white">{{ stats.routes_count }}</h3>
+                    <p id="statDrivesDesc" class="text-xs text-slate-400 mt-1">إجمالي الرحلات المحفوظة</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-400 text-xl">
+                    <i class="fa-solid fa-route"></i>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
+                <div>
+                    <p id="statVideosTitle" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">مقاطع الفيديو</p>
+                    <h3 class="text-2xl font-bold mt-1 text-white">{{ stats.videos_count }}</h3>
+                    <p id="statVideosDesc" class="text-xs text-slate-400 mt-1">ملفات الكاميرا عالية الدقة</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-indigo-400 text-xl">
+                    <i class="fa-solid fa-video"></i>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
+                <div>
+                    <p id="statPrivacyTitle" class="text-xs font-semibold text-slate-400 uppercase tracking-wider">مستوى الخصوصية</p>
+                    <h3 class="text-2xl font-bold mt-1 text-emerald-400 flex items-center gap-2">
+                        100% خاص ومحمي
+                    </h3>
+                    <p id="statPrivacyDesc" class="text-xs text-slate-400 mt-1">تخزين محلي بدون أي سحابة خارجية</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-emerald-400 text-xl">
+                    <i class="fa-solid fa-shield-check"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drives Table & Explorer -->
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+                <div>
+                    <h2 id="tableTitle" class="font-bold text-lg text-white">تسجيلات القيادة والرحلات</h2>
+                    <p id="tableSubtitle" class="text-xs text-slate-400">جميع الفيديوهات مخزنة حصرياً على جهازك الخاص بأمان تام</p>
+                </div>
+                <span class="text-xs bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1 rounded-full font-mono">
+                    {{ drives|length }} Trips
+                </span>
+            </div>
+
+            {% if drives %}
+            <div class="divide-y divide-slate-800">
+                {% for drive in drives %}
+                <div class="p-6 hover:bg-slate-800/40 transition-colors">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-3">
+                                <span class="font-mono text-cyan-400 font-bold text-base">{{ drive.route_id }}</span>
+                                <span class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700 font-mono">
+                                    {{ drive.segments_count }} min
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-400 flex items-center gap-4">
+                                <span><i class="fa-solid fa-database mr-1"></i> {{ drive.size_mb }} MB</span>
+                            </p>
+                        </div>
+
+                        <!-- Segment Chips -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            {% for seg in drive.segments %}
+                            <div class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                                <span class="text-xs font-mono text-slate-300">#{{ seg.segment }}</span>
+                                <div class="flex items-center gap-1.5 ml-2">
+                                    {% for f in seg.files %}
+                                        {% if 'fcamera' in f.name or 'qcamera' in f.name or 'dcamera' in f.name or '.mp4' in f.name %}
+                                        <button onclick="playVideo('{{ drive.route_id }}', '{{ seg.segment }}', '{{ f.name }}')" class="text-xs bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded-lg flex items-center gap-1 transition-all" title="Play {{ f.name }}">
+                                            <i class="fa-solid fa-play text-[10px]"></i> {{ f.name.split('.')[0] }}
+                                        </button>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="py-16 text-center space-y-4">
+                <div class="w-16 h-16 rounded-2xl bg-slate-800 text-slate-500 flex items-center justify-center mx-auto text-2xl border border-slate-700">
+                    <i class="fa-solid fa-car"></i>
+                </div>
+                <div class="space-y-1">
+                    <h3 id="emptyTitle" class="font-bold text-slate-300">لا توجد تسجيلات بعد (No Drives Yet)</h3>
+                    <p id="emptySubtitle" class="text-xs text-slate-400 max-w-md mx-auto">
+                        قم بربط جهاز الكوما باستخدام زر الربط بالأعلى. ستبدأ التسجيلات بالظهور هنا تلقائياً بمجرد اتصال الكوما بشبكة الواي فاي.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Pairing Modal (QR Code) -->
+    <div id="pairModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 space-y-6 shadow-2xl relative text-start">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 flex items-center justify-center">
+                        <i class="fa-solid fa-qrcode text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 id="modalTitle" class="font-bold text-white">ربط جهاز الكوما فور (Pair Comma)</h3>
+                        <p id="modalSubtitle" class="text-xs text-slate-400">امسح رمز الـ QR أو استخدم إعدادات الرابط اليدوية</p>
+                    </div>
+                </div>
+                <button onclick="closePairModal()" class="text-slate-400 hover:text-white p-2">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- QR Display -->
+            <div class="text-center space-y-3">
+                <div class="bg-slate-950 p-4 rounded-2xl inline-block border border-slate-800 shadow-inner">
+                    <img src="/api/qrcode" alt="Pairing QR Code" class="w-56 h-56 rounded-xl mx-auto object-contain">
+                </div>
+                <p id="modalQRDesc" class="text-xs text-slate-400">
+                    وجه شاشة جوالك نحو كاميرا الكوما الداخلية لقراءة الرمز، أو انسخ الإعدادات أدناه
+                </p>
+            </div>
+
+            <!-- Manual Parameters -->
+            <div class="space-y-3 bg-slate-950/60 p-4 rounded-xl border border-slate-800 text-xs">
+                <div>
+                    <label id="modalLblUrl" class="text-slate-400 block mb-1">رابط السيرفر (Server Endpoint):</label>
+                    <input type="text" readonly value="{{ public_url }}" class="bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg w-full font-mono text-cyan-400 select-all">
+                </div>
+                <div>
+                    <label id="modalLblToken" class="text-slate-400 block mb-1">رمز الأمان (Vault Security Token):</label>
+                    <input type="text" readonly value="{{ token }}" class="bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg w-full font-mono text-cyan-400 select-all">
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button onclick="closePairModal()" id="modalBtnClose" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Player Modal -->
+    <div id="videoModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-4xl w-full p-6 space-y-4 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-video text-cyan-400"></i>
+                    <h3 id="videoModalTitle" class="font-bold text-white text-sm font-mono">Playing Segment</h3>
+                </div>
+                <button onclick="closeVideoModal()" class="text-slate-400 hover:text-white p-2">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="aspect-video bg-black rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center">
+                <video id="vaultVideoPlayer" controls class="w-full h-full object-contain">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+    </div>
+
+    <footer class="p-6 text-center text-xs text-slate-500 border-t border-slate-900">
+        FreePilots Vault &bull; 100% Private Dashcam & Drive Archive Server for Sunnypilot
+    </footer>
+
+    <script>
+        const i18n = {
+            ar: {
+                dir: 'rtl',
+                langBtn: 'English',
+                navSubtitle: 'خزنة تسجيلات الداش كام الخاصة بـ Sunnypilot',
+                btnPairText: 'ربط الكوما (QR)',
+                statStorageTitle: 'سعة التخزين',
+                statDrivesTitle: 'الرحلات المسجلة',
+                statDrivesDesc: 'إجمالي الرحلات المحفوظة',
+                statVideosTitle: 'مقاطع الفيديو',
+                statVideosDesc: 'ملفات الكاميرا عالية الدقة',
+                statPrivacyTitle: 'مستوى الخصوصية',
+                statPrivacyDesc: 'تخزين محلي بدون أي سحابة خارجية',
+                tableTitle: 'تسجيلات القيادة والرحلات',
+                tableSubtitle: 'جميع الفيديوهات مخزنة حصرياً على جهازك الخاص بأمان تام',
+                emptyTitle: 'لا توجد تسجيلات بعد',
+                emptySubtitle: 'قم بربط جهاز الكوما باستخدام زر الربط بالأعلى. ستبدأ التسجيلات بالظهور هنا تلقائياً بمجرد اتصال الكوما بشبكة الواي فاي.',
+                modalTitle: 'ربط جهاز الكوما فور (Pair Comma)',
+                modalSubtitle: 'امسح رمز الـ QR أو استخدم إعدادات الرابط اليدوية',
+                modalQRDesc: 'وجه شاشة جوالك نحو كاميرا الكوما الداخلية لقراءة الرمز، أو انسخ الإعدادات أدناه',
+                modalLblUrl: 'رابط السيرفر (Server Endpoint):',
+                modalLblToken: 'رمز الأمان (Vault Security Token):',
+                modalBtnClose: 'إغلاق'
+            },
+            en: {
+                dir: 'ltr',
+                langBtn: 'عربي',
+                navSubtitle: 'Private Sunnypilot Archive & Dashcam Manager',
+                btnPairText: 'Link Comma (QR)',
+                statStorageTitle: 'Vault Storage',
+                statDrivesTitle: 'Recorded Drives',
+                statDrivesDesc: 'Unique routes recorded',
+                statVideosTitle: 'Video Segments',
+                statVideosDesc: 'High-Res Camera Files',
+                statPrivacyTitle: 'Privacy Status',
+                statPrivacyDesc: 'Direct upload (No Comma Cloud)',
+                tableTitle: 'Archived Drives & Trips',
+                tableSubtitle: 'All footage is stored privately on your local server',
+                emptyTitle: 'No Drives Archived Yet',
+                emptySubtitle: 'Link your Comma device using the button above. Drives will automatically upload to this vault as soon as you connect your Comma to Wi-Fi.',
+                modalTitle: 'Link Comma Device',
+                modalSubtitle: 'Scan QR Code or enter manual server parameters',
+                modalQRDesc: 'Point your phone screen to the Comma interior camera to scan QR, or copy parameters below',
+                modalLblUrl: 'Server Endpoint URL:',
+                modalLblToken: 'Vault Security Token:',
+                modalBtnClose: 'Close'
+            }
+        };
+
+        let currentLang = localStorage.getItem('freepilot_lang') || 'ar';
+
+        function toggleLang() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            localStorage.setItem('freepilot_lang', currentLang);
+            applyLanguage();
+        }
+
+        function applyLanguage() {
+            const data = i18n[currentLang];
+            document.documentElement.dir = data.dir;
+            document.documentElement.lang = currentLang;
+
+            document.getElementById('langBtnText').innerText = data.langBtn;
+            document.getElementById('navSubtitle').innerText = data.navSubtitle;
+            document.getElementById('btnPairText').innerText = data.btnPairText;
+            document.getElementById('statStorageTitle').innerText = data.statStorageTitle;
+            document.getElementById('statDrivesTitle').innerText = data.statDrivesTitle;
+            document.getElementById('statDrivesDesc').innerText = data.statDrivesDesc;
+            document.getElementById('statVideosTitle').innerText = data.statVideosTitle;
+            document.getElementById('statVideosDesc').innerText = data.statVideosDesc;
+            document.getElementById('statPrivacyTitle').innerText = data.statPrivacyTitle;
+            document.getElementById('statPrivacyDesc').innerText = data.statPrivacyDesc;
+            document.getElementById('tableTitle').innerText = data.tableTitle;
+            document.getElementById('tableSubtitle').innerText = data.tableSubtitle;
+            
+            const emptyT = document.getElementById('emptyTitle');
+            if (emptyT) emptyT.innerText = data.emptyTitle;
+            const emptyS = document.getElementById('emptySubtitle');
+            if (emptyS) emptyS.innerText = data.emptySubtitle;
+
+            document.getElementById('modalTitle').innerText = data.modalTitle;
+            document.getElementById('modalSubtitle').innerText = data.modalSubtitle;
+            document.getElementById('modalQRDesc').innerText = data.modalQRDesc;
+            document.getElementById('modalLblUrl').innerText = data.modalLblUrl;
+            document.getElementById('modalLblToken').innerText = data.modalLblToken;
+            document.getElementById('modalBtnClose').innerText = data.modalBtnClose;
+        }
+
+        document.addEventListener('DOMContentLoaded', applyLanguage);
+
+        function openPairModal() {
+            document.getElementById('pairModal').classList.remove('hidden');
+        }
+        function closePairModal() {
+            document.getElementById('pairModal').classList.add('hidden');
+        }
+        function playVideo(route, segment, file) {
+            const player = document.getElementById('vaultVideoPlayer');
+            const title = document.getElementById('videoModalTitle');
+            title.innerText = `${route} / Segment #${segment} (${file})`;
+            player.src = `/api/video/${route}/${segment}/${file}`;
+            document.getElementById('videoModal').classList.remove('hidden');
+            player.play();
+        }
+        function closeVideoModal() {
+            const player = document.getElementById('vaultVideoPlayer');
+            player.pause();
+            player.src = '';
+            document.getElementById('videoModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
