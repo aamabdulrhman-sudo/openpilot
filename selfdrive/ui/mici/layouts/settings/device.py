@@ -9,7 +9,7 @@ from openpilot.common.params import Params
 from openpilot.common.time_helpers import system_time_valid
 from openpilot.system.ui.widgets.scroller import NavRawScrollPanel, NavScroller
 from openpilot.selfdrive.ui.mici.widgets.button import BigButton, BigCircleButton
-from openpilot.selfdrive.ui.mici.widgets.dialog import BigDialog, BigConfirmationDialog
+from openpilot.selfdrive.ui.mici.widgets.dialog import BigDialog, BigConfirmationDialog, BigInputDialog
 from openpilot.selfdrive.ui.mici.widgets.pairing_dialog import PairingDialog
 from openpilot.selfdrive.ui.mici.onroad.driver_camera_dialog import DriverCameraDialog
 from openpilot.selfdrive.ui.mici.layouts.onboarding import TrainingGuide, TermsPage
@@ -127,6 +127,33 @@ class UpdaterState(IntEnum):
   WAITING_FOR_UPDATER = 1
   UPDATER_RESPONDING = 2
 
+
+
+class VaultUrlButton(BigButton):
+  def __init__(self):
+    self._params = Params()
+    url = self._params.get("FreePilotsVaultUrl", encoding='utf-8') or "https://ddash.aaam.sa"
+    super().__init__("vault url", url, gui_app.texture("icons_mici/settings/device_icon.png", 72, 58))
+    self.set_click_callback(self._on_click)
+
+  def _update_state(self):
+    super()._update_state()
+    url = self._params.get("FreePilotsVaultUrl", encoding='utf-8') or "https://ddash.aaam.sa"
+    if self.get_value() != url:
+      self.set_value(url)
+
+  def _on_click(self):
+    current_url = self._params.get("FreePilotsVaultUrl", encoding='utf-8') or "https://ddash.aaam.sa"
+    def on_confirm(new_url: str):
+      new_url = new_url.strip()
+      if new_url:
+        if not new_url.startswith("http://") and not new_url.startswith("https://"):
+          new_url = "https://" + new_url
+        self._params.put("FreePilotsVaultUrl", new_url)
+        self.set_value(new_url)
+
+    dlg = BigInputDialog("Enter Vault Server URL...", current_url, minimum_length=4, confirm_callback=on_confirm)
+    gui_app.push_widget(dlg)
 
 class PairBigButton(BigButton):
   def __init__(self):
@@ -341,6 +368,7 @@ class DeviceLayoutMici(NavScroller):
 
     self._scroller.add_widgets([
       DeviceInfoLayoutMici(),
+      VaultUrlButton(),
       UpdateOpenpilotBigButton(),
       PairBigButton(),
       review_training_guide_btn,
