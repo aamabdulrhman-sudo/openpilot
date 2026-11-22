@@ -130,8 +130,8 @@ class UpdaterState(IntEnum):
 
 class PairBigButton(BigButton):
   def __init__(self):
-    super().__init__("FreePilots Vault", "ddash.aaam.sa", gui_app.texture("icons_mici/settings/comma_icon.png", 33, 60))
-    self.set_click_callback(lambda: gui_app.push_widget(BigDialog("FreePilots Vault", "Connected to: https://ddash.aaam.sa\nPrivate Dashcam Server active.")))
+    super().__init__("FreePilots eSIM", "Scan on Phone", gui_app.texture("icons_mici/settings/comma_icon.png", 33, 60))
+    self.set_click_callback(lambda: gui_app.push_widget(BigDialog("Add eSIM", "Open on your phone:\nhttps://ddash.aaam.sa/esim\nScan QR to activate 4G!")))
 
   def _get_label_font_size(self):
     return 64
