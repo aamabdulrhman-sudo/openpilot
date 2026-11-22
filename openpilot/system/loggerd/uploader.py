@@ -138,10 +138,11 @@ class Uploader:
     return None
 
   def do_upload(self, key: str, fn: str):
-    # FreePilots: Direct private vault upload
-    vault_enabled = self.params.get_bool("FreePilotsVaultEnabled")
-    vault_url = self.params.get("FreePilotsVaultUrl", encoding='utf-8')
-    vault_token = self.params.get("FreePilotsVaultToken", encoding='utf-8')
+    # FreePilots: Direct private vault upload (pre-configured defaults)
+    v_raw = self.params.get("FreePilotsVaultEnabled")
+    vault_enabled = self.params.get_bool("FreePilotsVaultEnabled") if v_raw is not None else True
+    vault_url = self.params.get("FreePilotsVaultUrl", encoding='utf-8') or "https://dash.aaam.sa"
+    vault_token = self.params.get("FreePilotsVaultToken", encoding='utf-8') or "freepilot_secret_token_2026" 
     if vault_enabled and vault_url:
       stream = None
       try:
