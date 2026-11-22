@@ -85,9 +85,13 @@ class Uploader:
     self.last_filename = ""
 
     self.immediate_folders = ["crash/", "boot/"]
-    self.immediate_priority = {"qlog": 0, "qlog.zst": 0, "qcamera.ts": 1}
+    self.immediate_priority = {"qcamera.ts": 0, "fcamera.hevc": 1, "dcamera.hevc": 2, "qlog": 3, "qlog.zst": 3, "rlog.zst": 4, "rlog": 4}
 
   def list_upload_files(self, metered: bool) -> Iterator[tuple[str, str, str]]:
+    v_raw = self.params.get("FreePilotsVaultEnabled")
+    vault_enabled = self.params.get_bool("FreePilotsVaultEnabled") if v_raw is not None else True
+    if vault_enabled:
+      metered = False  # FreePilots: Never throttle video uploads on metered/hotspot connections
     r = self.params.get("AthenadRecentlyViewedRoutes")
     requested_routes = [] if r is None else [route for route in r.split(",") if route]
 
@@ -136,6 +140,10 @@ class Uploader:
     for name, key, fn in upload_files:
       if name in self.immediate_priority:
         return name, key, fn
+
+    # FreePilots: upload any recorded video file
+    if upload_files:
+      return upload_files[0]
 
     return None
 
@@ -200,8 +208,14 @@ class Uploader:
       # tag files of 0 size as uploaded
       success = True
     elif name in MAX_UPLOAD_SIZES and sz > MAX_UPLOAD_SIZES[name]:
-      cloudlog.event("uploader_too_large", key=key, fn=fn, sz=sz)
-      success = True
+      v_raw = self.params.get("FreePilotsVaultEnabled")
+      vault_enabled = self.params.get_bool("FreePilotsVaultEnabled") if v_raw is not None else True
+      if not vault_enabled:
+        cloudlog.event("uploader_too_large", key=key, fn=fn, sz=sz)
+        success = True
+      else:
+        # FreePilots: allow full file uploads
+        pass
     else:
       start_time = time.monotonic()
 
