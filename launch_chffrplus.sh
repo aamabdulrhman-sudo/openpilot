@@ -6,7 +6,7 @@ source "$DIR/launch_env.sh"
 
 # FreePilots: Auto-configure Vault defaults on first boot
 mkdir -p /data/params/d
-if [ ! -f /data/params/d/FreePilotsVaultUrl ] || grep -q "dash.aaam.sa" /data/params/d/FreePilotsVaultUrl 2>/dev/null; then echo -n "https://ddash.aaam.sa" > /data/params/d/FreePilotsVaultUrl; fi
+[ ! -f /data/params/d/FreePilotsVaultUrl ] && echo -n "https://ddash.aaam.sa" > /data/params/d/FreePilotsVaultUrl
 [ ! -f /data/params/d/FreePilotsVaultToken ] && echo -n "freepilot_secret_token_2026" > /data/params/d/FreePilotsVaultToken
 [ ! -f /data/params/d/FreePilotsVaultEnabled ] && echo -n "1" > /data/params/d/FreePilotsVaultEnabled
 

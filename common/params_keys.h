@@ -6,9 +6,6 @@
 #include "cereal/gen/cpp/log.capnp.h"
 
 inline static std::unordered_map<std::string, ParamKeyAttributes> keys = {
-    {"FreePilotsVaultEnabled", {PERSISTENT | BACKUP, BOOL, "1"}},
-    {"FreePilotsVaultUrl", {PERSISTENT | BACKUP, STRING, "https://ddash.aaam.sa"}},
-    {"FreePilotsVaultToken", {PERSISTENT | BACKUP, STRING, "freepilot_secret_token_2026"}},
     {"AccessToken", {CLEAR_ON_MANAGER_START | DONT_LOG, STRING}},
     {"AdbEnabled", {PERSISTENT | BACKUP, BOOL}},
     {"AlwaysOnDM", {PERSISTENT | BACKUP, BOOL}},
