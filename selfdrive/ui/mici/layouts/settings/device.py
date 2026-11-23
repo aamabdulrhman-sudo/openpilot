@@ -155,41 +155,17 @@ class VaultUrlButton(BigButton):
     dlg = BigInputDialog("Enter Vault Server URL...", current_url, minimum_length=4, confirm_callback=on_confirm)
     gui_app.push_widget(dlg)
 
-class PairBigButton(BigButton):
+class EsimBigButton(BigButton):
   def __init__(self):
-    super().__init__("FreePilots eSIM", "Scan on Phone", gui_app.texture("icons_mici/settings/comma_icon.png", 33, 60))
-    self.set_click_callback(lambda: gui_app.push_widget(BigDialog("Add eSIM", "Open on your phone:\nhttps://ddash.aaam.sa/esim\nScan QR to activate 4G!")))
+    super().__init__("FreePilots eSIM", "Scan on Phone", gui_app.texture("icons_mici/settings/network/cell_strength_full.png", 64, 64))
+    self.set_click_callback(self._on_click)
 
   def _get_label_font_size(self):
     return 64
 
-  def _update_state(self):
-    super()._update_state()
-
-    if ui_state.prime_state.is_paired():
-      self.set_text("paired")
-      if ui_state.prime_state.is_prime():
-        self.set_value("subscribed")
-      else:
-        self.set_value("upgrade to prime")
-    else:
-      self.set_text("pair")
-      self.set_value("connect.comma.ai")
-
-  def _handle_mouse_release(self, mouse_pos: MousePos):
-    super()._handle_mouse_release(mouse_pos)
-
-    # TODO: show ad dialog when clicked if not prime
-    if ui_state.prime_state.is_paired():
-      return
-    dlg: BigDialog | PairingDialog
-    if not system_time_valid():
-      dlg = BigDialog("", tr("Please connect to Wi-Fi to complete initial pairing."))
-    elif UNREGISTERED_DONGLE_ID == (ui_state.params.get("DongleId") or UNREGISTERED_DONGLE_ID):
-      dlg = BigDialog("", tr("Device must be registered with the comma.ai backend to pair."))
-    else:
-      dlg = PairingDialog()
-    gui_app.push_widget(dlg)
+  def _on_click(self):
+    url = Params().get("FreePilotsVaultUrl", encoding='utf-8') or "https://ddash.aaam.sa"
+    gui_app.push_widget(BigDialog("FreePilots eSIM", f"Open on phone / browser:\n{url}/esim\n\nScan eSIM QR to activate 4G LTE!"))
 
 
 UPDATER_TIMEOUT = 10.0  # seconds to wait for updater to respond
@@ -369,8 +345,8 @@ class DeviceLayoutMici(NavScroller):
     self._scroller.add_widgets([
       DeviceInfoLayoutMici(),
       VaultUrlButton(),
+      EsimBigButton(),
       UpdateOpenpilotBigButton(),
-      PairBigButton(),
       review_training_guide_btn,
       driver_cam_btn,
       terms_btn,
